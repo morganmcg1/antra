@@ -2,18 +2,49 @@ import streamlit as st
 import torch
 from einops import rearrange
 from fastai2.basics import *
+from tokenizers import spacy_fastai, Numericalize
 
-st.title('anTrá')
-st.text('')
+# st.title('anTrá')
+# st.text('')
 
-src_txt=st.text_area("what shall we translate?", height=50, max_chars=280)
-st.text('')
-st.text('')
+# src_txt=st.text_area("what shall we translate?", height=50, max_chars=280)
+# st.text('')
+# st.text('')
+
+def st_tokenize(text, tokenizer):
+    return tokenizer.tokenize(text)
+
+# def st_numericalize(tokens, vocab):
+    
+#     o2i = None if vocab is None else defaultdict(int, {v:k for k,v in enumerate(vocab)})
+#     def encodes(self, o): return tensor([o2i  [o_] for o_ in o])
+#     def decodes(self, o): return L(self.vocab[o_] for o_ in o if self.vocab[o_] != self.pad_tok)
+#     return [o for o in tokens]
+
+
+
+def main():
+    # MODEL
+    model = torch.load('models/paracrawl_en_ga_5e_5e-4.pth', map_location=torch.device('cpu'))
+    if model is not None: print('success')
+
+    # Setup 
+    tokenizer=spacy_fastai()
+    numericalizer=Numericalize(vocab)
+
+    # Tokenize
+    src_text=["WHAT if I can't, what ever shall we do?", "WHAT if I can't, what ever shall we do?"]    
+    tokens = st_tokenize(src_text[0], tokenizer)
+    nums = numericalize.encodes(tokens)
+    print(nums)
+
+#print(tokenizer.tokenize(inp[0]))
+
 
 #learner=
-learner=load_learner('paracrawl_en_ga_5e_5e-4_learner.pkl')
-if learner is not None:
-    st.success('its here!')
+# learner=load_learner('models/paracrawl_en_ga_5e_5e-4_learner.pkl')
+# if learner is not None:
+#     st.success('its here!')
 
 # # LOAD FUNCS
 # def setup_learner():
@@ -101,3 +132,6 @@ if learner is not None:
 #             </style>
 #             """
 # st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
+
+if __name__ == '__main__':
+	main()
