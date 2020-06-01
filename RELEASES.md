@@ -11,7 +11,8 @@ Baseline release to be improved upon
 - Removed samples longer than 60 tokens (90th percentile was 58 tokens long)
 
 #### Tokenizer
-- Spacy + fastai rules
+- Spacy tokenizer
+- [fastai rules](http://dev.fast.ai/text.core#Preprocessing-rules): [fix_html, replace_rep, replace_wrep, spec_add_spaces, rm_useless_spaces, replace_all_caps, replace_maj, lowercase]
 
 #### Model
 - PyTorch nn.Transformer
