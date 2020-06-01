@@ -41,9 +41,10 @@ class spacy_fastai():
         return [o for sl in post_processed for o in sl]
 
 class Numericalize():
-    def __init__(self, vocab:list):
-        self.vocab=vocab
-        self.o2i = None if vocab is None else defaultdict(int, {v:k for k,v in enumerate(vocab)})
-    def encode(self, o:list): return tensor([self.o2i  [o_] for o_ in o])
-    def decodes(self, o): return [self.vocab[o_] for o_ in o] # if self.vocab[o_] != self.pad_tok)
+    def __init__(self, src_vocab:list=None, trg_vocab:list=None):
+        self.src_vocab,self.trg_vocab = src_vocab,trg_vocab
+        self.src_o2i = None if src_vocab is None else defaultdict(int, {v:k for k,v in enumerate(src_vocab)})
+        #self.trg_o2i = None if trg_vocab is None else defaultdict(int, {v:k for k,v in enumerate(trg_vocab)})
+    def encode(self, o:list): return tensor([self.src_o2i  [o_] for o_ in o])
+    def decode(self, o:list): return [self.trg_vocab[o_] for o_ in o] # if self.vocab[o_] != self.pad_tok)
 
