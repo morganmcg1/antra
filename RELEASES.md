@@ -1,4 +1,4 @@
-# Release
+# Release History
 
 ## v0.1
 Baseline release to be improved upon
