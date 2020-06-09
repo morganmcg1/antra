@@ -83,8 +83,8 @@ def main():
     st.sidebar.markdown("---")
     st.sidebar.text('')
     if st.sidebar.checkbox('Show Release Notes'):
-        st.sidebar.markdown('### These are the release notes \n \
-        V1 \n v1 was a great release')
+        st.sidebar.markdown(f'This is version {model_v}, \n [see here](https://github.com/morganmcg1/antra/blob/master/RELEASES.md)\
+            for full release notes')
 
     # FORMATTING
     hide_streamlit_style = """
