@@ -136,6 +136,7 @@ def load_model(model_path=None, ModelClass=None, src_vcbsz=None, trg_vcbsz=None,
     state=torch.load(model_path, map_location=torch.device('cpu'))
     model_state = state['model']
     model.load_state_dict(model_state)
+    model.reset()
     return model.eval()
 
 def gen_nopeek_mask(length):
@@ -148,8 +149,17 @@ def forward_model(src_toks:list=None, trg_toks:list=None, model=None):
     src = torch.as_tensor(src_toks).unsqueeze(0).long()
     tgt = torch.as_tensor(trg_toks).unsqueeze(0)
     tgt_mask = gen_nopeek_mask(tgt.shape[1])
-    output = model.forward(src, tgt, tgt_mask=tgt_mask, src_key_padding_mask=None, 
-                            tgt_key_padding_mask=None, memory_key_padding_mask=None)
+    with torch.no_grad():
+        output = model.forward(src, tgt, tgt_mask=tgt_mask, src_key_padding_mask=None, 
+                                tgt_key_padding_mask=None, memory_key_padding_mask=None)
+
+    # fastai inference (from Zach)
+    # with torch.no_grad():
+    #     learn.model.reset()
+    #     learn.model.eval()
+    #     out = learn.model(*batch)
+    # learn.loss_func.decodes(out[0])
+
     return output.squeeze(0).detach()
 
 @st.cache()
