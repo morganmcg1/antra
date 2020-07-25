@@ -9,6 +9,7 @@ import pytz
 import csv
 import os.path
 from os import path
+import time
 
 from tokenizers import spacy_fastai, Numericalize
 from v01_en_ga_transformer import pt_Transformer as ModelClass
@@ -16,12 +17,12 @@ from v01_en_ga_transformer import pt_Transformer as ModelClass
 # Tokenize
 #src_text=["WHAT if I can't, what ever shall we do?", "WHAT if I can't, what ever shall we do?"]    
 
-config={'model_v':'0.1',
-    'model_path':'models/v01_paracrawl_en_ga_20e_5e-4.pth',
+config={'model_v':'0.2',
+    'model_path':'models/paracrawl_en_ga_5e_5e-4_5e_1e-5_v0.2_exp4.pth',
     'd_model':512,
     'd_inner':2048,
-    'en_vocab_path':'data/paracrawl_vocab_en.csv',
-    'ga_vocab_path':'data/paracrawl_vocab_ga.csv'
+    'en_vocab_path':'data/paracrawl_vocab_en_v0.2_exp4.csv',
+    'ga_vocab_path':'data/paracrawl_vocab_ga_v0.2_exp4.csv'
     }
 
 model_v=config['model_v']
@@ -50,6 +51,8 @@ def main():
     numericalizer=Numericalize(en_vocab, ga_vocab)
     
     # LOAD MODEL
+
+    start = time.time()
     model = load_model(model_path=model_path, ModelClass=ModelClass, src_vcbsz=len(en_vocab), trg_vcbsz=len(ga_vocab),
                         d_model=d_model, d_inner=d_inner)
 
@@ -63,17 +66,20 @@ def main():
 
     # TRANSLATE
     if st.button('Translate'):
+        trans_start = time.time()
         st.text('')
         st.text('')
         #with st.spinner('Wait for it...'):
         trg_txt=translate(src_txt=src_txt,model=model,tokenizer=tokenizer,numericalizer=numericalizer)
+        trg_txt=fastai_process_trans(trans=trg_txt)[0]
         #st.success('Done!')
 
         st.markdown(out_html,unsafe_allow_html=True)
         st.markdown(f"## \n \
         > {trg_txt}")
-        
-        log_usage(src_txt,trg_txt,feedback=None,model_v=model_v)
+        trans_end = time.time()
+        inf_time = trans_end - trans_start
+        log_usage(src_txt,trg_txt,inf_time=inf_time,feedback=None,model_v=model_v)
     
     # see html from here for layout ideas: https://discuss.streamlit.io/t/st-button-in-a-custom-layout/2187/2
 
@@ -83,7 +89,7 @@ def main():
     st.sidebar.markdown("---")
     st.sidebar.text('')
     if st.sidebar.checkbox('Show Release Notes'):
-        st.sidebar.markdown(f'This is version {model_v}, \n [see here](https://github.com/morganmcg1/antra/blob/master/RELEASES.md)\
+        st.sidebar.markdown(f'This is v{model_v}, \n [see here](https://github.com/morganmcg1/antra/blob/master/RELEASES.md)\
             for full release notes')
 
     # FORMATTING
@@ -94,15 +100,15 @@ def main():
                 """
     st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
 
-def log_usage(src_txt, trg_txt,feedback=None,model_v=None):
-    log_fn='usage_logs.csv'
+def log_usage(src_txt, trg_txt,feedback=None,model_v=None,inf_time=None):
+    log_fn='usage_logs2.csv'
     feedback='na'
     naive_dt = datetime.now()
     tz='Europe/Dublin'
     indy = pytz.timezone(tz)
     dt = indy.localize(naive_dt)
 
-    fields=[dt,tz,src_txt,trg_txt,feedback]
+    fields=[dt,tz,src_txt,trg_txt,feedback,inf_time]
 
     if path.exists(log_fn):
         with open(log_fn, 'a') as f:
@@ -128,7 +134,53 @@ def translate(src_txt:str=None, model=None, tokenizer=None, numericalizer=None,
     trg_toks=translate_seq(src_toks,trg_toks,model,eos_idx=eos_idx)
     trg_toks = clean_trg_toks(trg_toks, bos_idx, eos_idx)
     trg_toks=numericalizer.decode(trg_toks)
-    return ' '.join(trg_toks)
+    return [' '.join(trg_toks)]
+
+def fastai_process_trans(trans):
+    trans_ls=[]
+    for s in trans: 
+        #print(s)
+        tmp = s.replace('xxbos','')
+        tmp = tmp.replace('xxeos','')
+        tmp = tmp.replace(' .','.')
+        tmp = tmp.replace(' ,',',')
+        tmp = tmp.replace(' ?','?')
+        tmp = tmp.replace(' !','!')
+        #print(tmp[0])
+        if tmp.endswith('. '): tmp=tmp[:-1]
+        if tmp.endswith('? '): tmp=tmp[:-1]
+        if tmp.endswith('! '): tmp=tmp[:-1]
+
+        for spec in ['xxmaj ', 'xxup ']:
+            found=[]
+            for m in re.finditer(spec, tmp):
+                found.append(m.start())
+            for f in found:
+                m = tmp.find(spec)
+                if m != -1:   
+                    ml = m+len(spec)
+                    tmp = tmp[:ml] + tmp[ml].upper() + tmp[ml+1:]
+                    if m != 0:
+                        tmp = tmp[:m] + tmp[ml:]
+                    else: 
+                        tmp = tmp[ml:]
+
+        found=[]    
+        xxwrep = 'xxwrep '            
+        for m in re.finditer(xxwrep, tmp):
+            found.append(m.start())
+        for f in found:
+            m = tmp.find(xxwrep)
+            n = int(tmp[m+7])    # number of repetitions of word
+            pwrep = m+8    # position where repeated word starts
+            wrep = tmp[pwrep:].split()[0]    # word to be repeated
+            lwrep = len(wrep)    # length of repeated word
+            tmp = tmp[:m] + f"{wrep} " * n + tmp[pwrep+lwrep+1:]
+        
+        # Remove space at start
+        if tmp[0] == ' ': tmp = tmp[1:]            
+        trans_ls.append(tmp)
+    return trans_ls
 
 @st.cache()
 def load_model(model_path=None, ModelClass=None, src_vcbsz=None, trg_vcbsz=None, d_model=None, d_inner=None):
@@ -136,7 +188,7 @@ def load_model(model_path=None, ModelClass=None, src_vcbsz=None, trg_vcbsz=None,
     state=torch.load(model_path, map_location=torch.device('cpu'))
     model_state = state['model']
     model.load_state_dict(model_state)
-    model.reset()
+    #model.reset()
     return model.eval()
 
 def gen_nopeek_mask(length):
