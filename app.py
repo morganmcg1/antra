@@ -102,6 +102,7 @@ def main():
 
 def log_usage(src_txt, trg_txt,feedback=None,model_v=None,inf_time=None):
     log_fn='usage_logs2.csv'
+    log_dir='logs'
     feedback='na'
     naive_dt = datetime.now()
     tz='Europe/Dublin'
@@ -111,11 +112,11 @@ def log_usage(src_txt, trg_txt,feedback=None,model_v=None,inf_time=None):
     fields=[dt,tz,src_txt,trg_txt,feedback,inf_time]
 
     if path.exists(log_fn):
-        with open(log_fn, 'a') as f:
+        with open(log_dir + '/' + log_fn, 'a') as f:
             writer = csv.writer(f,delimiter=',')
             writer.writerow(fields)
     else:
-         with open(log_fn, 'w') as f:
+         with open(log_dir + '/' + log_fn, 'w') as f:
             writer = csv.writer(f, delimiter=',')
             writer.writerow(fields)
 
