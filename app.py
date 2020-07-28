@@ -11,8 +11,8 @@ import os.path
 from os import path
 import time
 
-from tokenizers import spacy_fastai, Numericalize
-from v01_en_ga_transformer import pt_Transformer as ModelClass
+from utils.tokenizer_funcs import spacy_fastai, Numericalize
+from utils.v01_en_ga_transformer import pt_Transformer as ModelClass
 
 # Tokenize
 #src_text=["WHAT if I can't, what ever shall we do?", "WHAT if I can't, what ever shall we do?"]    
