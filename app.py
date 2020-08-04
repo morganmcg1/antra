@@ -44,17 +44,17 @@ out_html = 	"""<h2 style=text-align:center;">🇮🇪👇 </h2>"""
 # RUN APP
 def main():
     # TOKENIZER SETUP 
-    en_vocab=open_vocab(en_vocab_path)
-    ga_vocab=open_vocab(ga_vocab_path)
+    # en_vocab=open_vocab(en_vocab_path)
+    # ga_vocab=open_vocab(ga_vocab_path)
 
     tokenizer=spacy_fastai()
-    numericalizer=Numericalize(en_vocab, ga_vocab)
+    #numericalizer=Numericalize(en_vocab, ga_vocab)
     
     # LOAD MODEL
 
     start = time.time()
-    model = load_model(model_path=model_path, ModelClass=ModelClass, src_vcbsz=len(en_vocab), trg_vcbsz=len(ga_vocab),
-                        d_model=d_model, d_inner=d_inner)
+    # model = load_model(model_path=model_path, ModelClass=ModelClass, src_vcbsz=len(en_vocab), trg_vcbsz=len(ga_vocab),
+    #                     d_model=d_model, d_inner=d_inner)
 
     # STREAMLIT SETUP
     st.markdown(html_title.format('royalblue','white'),unsafe_allow_html=True)
@@ -70,8 +70,9 @@ def main():
         st.text('')
         st.text('')
         #with st.spinner('Wait for it...'):
-        trg_txt=translate(src_txt=src_txt,model=model,tokenizer=tokenizer,numericalizer=numericalizer)
-        trg_txt=fastai_process_trans(trans=trg_txt)[0]
+        # trg_txt=translate(src_txt=src_txt,model=model,tokenizer=tokenizer,numericalizer=numericalizer)
+        # trg_txt=fastai_process_trans(trans=trg_txt)[0]
+        trg_txt = 'Am I working?'
         #st.success('Done!')
 
         st.markdown(out_html,unsafe_allow_html=True)
