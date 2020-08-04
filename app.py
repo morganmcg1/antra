@@ -14,11 +14,9 @@ import time
 from utils.tokenizer_funcs import spacy_fastai, Numericalize
 from utils.v01_en_ga_transformer import pt_Transformer as ModelClass
 
-# Tokenize
-#src_text=["WHAT if I can't, what ever shall we do?", "WHAT if I can't, what ever shall we do?"]    
-
 config={'model_v':'0.2',
-    'model_path':'models/paracrawl_en_ga_5e_5e-4_5e_1e-5_v0.2_exp4.pth',
+    #'model_path':'models/paracrawl_en_ga_5e_5e-4_5e_1e-5_v0.2_exp4.pth',
+    'model_path':'models/paracrawl_en_ga_5e_5e-4_5e_1e-5_v0.2_exp4_no_opt_quantized',
     'd_model':512,
     'd_inner':2048,
     'en_vocab_path':'data/paracrawl_vocab_en_v0.2_exp4.csv',
@@ -44,18 +42,23 @@ out_html = 	"""<h2 style=text-align:center;">🇮🇪👇 </h2>"""
 # RUN APP
 def main():
     # TOKENIZER SETUP 
-    # en_vocab=open_vocab(en_vocab_path)
-    # ga_vocab=open_vocab(ga_vocab_path)
+    en_vocab=open_vocab(en_vocab_path)
+    ga_vocab=open_vocab(ga_vocab_path)
 
     tokenizer=spacy_fastai()
-    #numericalizer=Numericalize(en_vocab, ga_vocab)
+    numericalizer=Numericalize(en_vocab, ga_vocab)
     
     # LOAD MODEL
-
     start = time.time()
+    # model_prog_bar = st.progress(0)
+    # model_prog_bar.progress(1)
     # model = load_model(model_path=model_path, ModelClass=ModelClass, src_vcbsz=len(en_vocab), trg_vcbsz=len(ga_vocab),
     #                     d_model=d_model, d_inner=d_inner)
-
+    model = load_quantized_model(model_path=model_path, ModelClass=ModelClass, src_vcbsz=len(en_vocab), trg_vcbsz=len(ga_vocab),
+                        d_model=d_model, d_inner=d_inner)
+                        
+    # model_prog_bar.progress(100)
+    
     # STREAMLIT SETUP
     st.markdown(html_title.format('royalblue','white'),unsafe_allow_html=True)
     st.text('')
@@ -72,7 +75,7 @@ def main():
         #with st.spinner('Wait for it...'):
         # trg_txt=translate(src_txt=src_txt,model=model,tokenizer=tokenizer,numericalizer=numericalizer)
         # trg_txt=fastai_process_trans(trans=trg_txt)[0]
-        trg_txt = 'Am I working?'
+        trg_txt = 'I am printing and the model has been unpacked'
         #st.success('Done!')
 
         st.markdown(out_html,unsafe_allow_html=True)
@@ -192,6 +195,19 @@ def load_model(model_path=None, ModelClass=None, src_vcbsz=None, trg_vcbsz=None,
     model.load_state_dict(model_state)
     #model.reset()
     return model.eval()
+
+@st.cache()
+def load_quantized_model(model_path=None, ModelClass=None, src_vcbsz=None, trg_vcbsz=None, d_model=None, d_inner=None):
+    model = ModelClass(src_vcbsz=src_vcbsz, trg_vcbsz=trg_vcbsz, d_model=d_model, d_inner=d_inner)
+    # Quantize model definition
+    quantized_model = torch.quantization.quantize_dynamic(model.to('cpu'), {torch.nn.Linear}, dtype=torch.qint8)
+    # Load state dict
+    state_dict=torch.load(model_path, map_location=torch.device('cpu'))
+    # Load state dict into model
+    quantized_model.load_state_dict(state_dict)
+    #model.reset()
+    return quantized_model.eval()
+
 
 def gen_nopeek_mask(length):
     mask = rearrange(torch.triu(torch.ones(length, length)) == 1, 'h w -> w h')
