@@ -1,2 +1,7 @@
 models/
 data/
+.DS_Store
+nbs/.DS_Store
+nbs/.ipynb_checkpoints/
+xlm-r_large_embs_en_full_2020-06-19_full
+__pycache__/
