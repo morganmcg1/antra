@@ -1,10 +1,19 @@
-
+'''
+    Functions used to tokenize and de-tokenizer
+'''
+import csv
 from fastai2.basics import *
-#from fastai2.text.all import *
 from fastai2.text.core import defaults, lowercase, SpacyTokenizer 
 
-
 inp=["WHAT if I can't, what ever shall we do?", "WHAT if I can't, what ever shall we do?"]
+
+def open_vocab(fpath):
+    vocab=[]
+    with open(fpath, newline='') as csvfile:
+        v_reader = csv.reader(csvfile, delimiter=',')
+        for row in v_reader: vocab.append(row)
+        vocab = [v for sub_v in vocab for v in sub_v]
+        return vocab
 
 def maps(*args, retain=noop):
     "Like `map`, except funcs are composed first"
@@ -15,10 +24,8 @@ def maps(*args, retain=noop):
 def compose(*funcs):
     "Modifed from fastcore library"
     "Create a function that composes all functions in `funcs`, passing along remaining `*args` and `**kwargs` to all"
-    #funcs = L(funcs)
     if len(funcs)==0: return noop
     if len(funcs)==1: return funcs[0]
-    #if order is not None: funcs = funcs.sorted(order)
     def _inner(x, *args, **kwargs):
         for f in funcs: x = f(x, *args, **kwargs)
         return x
