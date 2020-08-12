@@ -2,8 +2,12 @@
     Functions used to tokenize and de-tokenizer
 '''
 import csv
-from fastai2.basics import *
-from fastai2.text.core import defaults, lowercase, SpacyTokenizer 
+from functools import partial
+from collections import defaultdict #Counter,namedtuple,OrderedDict
+import spacy
+from spacy.symbols import ORTH
+from .text_helpers import *
+from torch import tensor
 
 inp=["WHAT if I can't, what ever shall we do?", "WHAT if I can't, what ever shall we do?"]
 
@@ -15,21 +19,20 @@ def open_vocab(fpath):
         vocab = [v for sub_v in vocab for v in sub_v]
         return vocab
 
-def maps(*args, retain=noop):
-    "Like `map`, except funcs are composed first"
-    f = compose(*args[:-1])
-    def _f(b): return retain(f(b), b)
-    return map(_f, args[-1])
+def lowercase(t, add_bos=True, add_eos=False):
+    "Converts `t` to lowercase"
+    return (f'{BOS} ' if add_bos else '') + t.lower().strip() + (f' {EOS}' if add_eos else '')
 
-def compose(*funcs):
-    "Modifed from fastcore library"
-    "Create a function that composes all functions in `funcs`, passing along remaining `*args` and `**kwargs` to all"
-    if len(funcs)==0: return noop
-    if len(funcs)==1: return funcs[0]
-    def _inner(x, *args, **kwargs):
-        for f in funcs: x = f(x, *args, **kwargs)
-        return x
-    return _inner
+class SpacyTokenizer():
+    "Spacy tokenizer for `lang`"
+    def __init__(self, lang='en', special_toks=None, buf_sz=5000):
+        self.special_toks = ifnone(special_toks, defaults.text_spec_tok)
+        nlp = spacy.blank(lang, disable=["parser", "tagger", "ner"])
+        for w in self.special_toks: nlp.tokenizer.add_special_case(w, [{ORTH: w}])
+        self.pipe,self.buf_sz = nlp.pipe,buf_sz
+
+    def __call__(self, items):
+        return (L(doc).attrgot('text') for doc in self.pipe(map(str,items), batch_size=self.buf_sz))
 
 class spacy_fastai():
     def __init__(self, tok=SpacyTokenizer(), defaults=defaults, lowercase=lowercase): 
@@ -52,6 +55,6 @@ class Numericalize():
         self.src_vocab,self.trg_vocab = src_vocab,trg_vocab
         self.src_o2i = None if src_vocab is None else defaultdict(int, {v:k for k,v in enumerate(src_vocab)})
         #self.trg_o2i = None if trg_vocab is None else defaultdict(int, {v:k for k,v in enumerate(trg_vocab)})
+    #def encode(self, o:list): return tensor([self.src_o2i  [o_] for o_ in o])
     def encode(self, o:list): return tensor([self.src_o2i  [o_] for o_ in o])
     def decode(self, o:list): return [self.trg_vocab[o_] for o_ in o] # if self.vocab[o_] != self.pad_tok)
-
