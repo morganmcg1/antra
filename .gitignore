@@ -5,3 +5,8 @@ nbs/.DS_Store
 nbs/.ipynb_checkpoints/
 xlm-r_large_embs_en_full_2020-06-19_full
 __pycache__/
+nbs/models
+nbs/data
+nbs/wandb
+nbs/.ipynb_checkpoints/
+translations/
