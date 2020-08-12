@@ -1,8 +1,4 @@
 einops==0.2.0
-# fastai2==0.0.25
-# fastcore==0.1.30
-#fastprogress==0.2.4
 spacy
 torch==1.6.0
-#torchvision==0.7.0
 streamlit==0.64.0
