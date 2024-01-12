@@ -1,4 +1,4 @@
 einops==0.2.0
 spacy
 torch==1.6.0
-streamlit==0.64.0
+streamlit==1.30.0
